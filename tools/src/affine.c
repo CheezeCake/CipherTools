@@ -6,11 +6,16 @@
 
 #include "utils.h"
 
-void affine(char *input, long int a, int b, int encrypt)
+char* affine(const char *input, long int a, int b, int encrypt)
 {
 	char alpha;
 	char c, x;
 	int i;
+	char *output = NULL;
+
+	output = calloc(strlen(input) + 1, sizeof(char));
+	if (output == NULL)
+		return NULL;
 
 	if(!encrypt) {
 		i = 1;
@@ -19,6 +24,8 @@ void affine(char *input, long int a, int b, int encrypt)
 		a = i;
 		b = a * (26 - b) % 26;
 	}
+
+	i = 0;
 
 	while ((c = *input)) {
 		if (isupper(c))
@@ -31,18 +38,15 @@ void affine(char *input, long int a, int b, int encrypt)
 		if (alpha != 0) {
 			x = c - alpha;
 
-			/*
-			if (encrypt)
-			*/
-				*input = alpha + ((a * x + b) % 26);
-			/*
-			else
-				*input = alpha + (((x - b) / a) % 26);
-				*/
+				output[i++] = alpha + ((a * x + b) % 26);
 		}
 
 		++input;
 	}
+
+	output[i] = '\0';
+
+	return output;
 }
 
 void usage(void)
@@ -59,6 +63,7 @@ int main(int argc, char **argv)
 	int arg = 1;
 
 	char *buffer = NULL;
+	char *output = NULL;
 	long int a = 0;
 	int b = 0;
 
@@ -91,10 +96,15 @@ int main(int argc, char **argv)
 	}
 
 
-	affine(buffer, a, b, encrypt);
-	printf("%s\n", buffer);
+	output = affine(buffer, a, b, encrypt);
+
+	if (output)
+		printf("%s\n", output);
+	else
+		fprintf(stderr, "Memory allocation error\n");
 
 	free(buffer);
+	free(output);
 
 	return 0;
 }
