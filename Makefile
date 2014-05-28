@@ -7,7 +7,7 @@ CFLAGS=-W -Wall -std=c89 -pedantic -I$(UTILSDIR)
 LDFLAGS=-lm
 
 
-all: affine atbash baconian
+all: affine atbash baconian base64
 
 
 utils.o: $(UTILSDIR)/utils.c
@@ -31,6 +31,12 @@ baconian: baconian.o utils.o
 
 baconian.o: $(SRCDIR)/baconian.c
 	$(CC) -c $(SRCDIR)/baconian.c -o $(SRCDIR)/baconian.o $(CFLAGS) $(LDFLAGS)
+
+base64: base64.o utils.o
+	$(CC) $(SRCDIR)/base64.o $(UTILSDIR)/utils.o -o $(BINDIR)/base64 $(CFLAGS) $(LDFLAGS)
+
+base64.o: $(SRCDIR)/base64.c
+	$(CC) -c $(SRCDIR)/base64.c -o $(SRCDIR)/base64.o $(CFLAGS) $(LDFLAGS)
 
 
 clean:
