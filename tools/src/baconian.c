@@ -6,13 +6,14 @@
 #include "utils.h"
 
 #define OKCHAR(c) (c == 'A' || c == 'B')
+#define BITS 5
 
-int decrypt_value(const int value[5])
+int decrypt_value(const int value[BITS])
 {
 	int i;
 	int ret = 0;
 
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < BITS; i++)
 		ret |= value[i] << i;
 
 	return ret;
@@ -24,36 +25,50 @@ void unexpected_char(int c)
 	exit(1);
 }
 
-void baconian_encrypt(const char *input)
+char* baconian_encrypt(const char *input)
 {
 	int c;
 	int i;
+	int index = 0;
 	const int mask = 0x10;
+	char *output = NULL;
+
+	output = calloc(countalpha(input) * BITS + countnonalpha(input) + 1, sizeof(char));
+	if (!output)
+		return NULL;
 
 	while ((c = *input)) {
 		if (isalpha(c)) {
 			c = toupper(c) - 'A';
 
-			for (i = 0; i < 5; i++) {
-				printf("%c", ((c & mask) == 0) ? 'A' : 'B');
+			for (i = 0; i < BITS; i++) {
+				output[index++] = ((c & mask) == 0) ? 'A' : 'B';
 				c <<= 1;
 			}
 		}
 		else {
-			printf("%c", c);
+			output[index++] = c;
 		}
 
 		++input;
 	}
 
-	printf("\n");
+	output[index] = '\0';
+
+	return output;
 }
 
-void baconian_decrypt(const char *input)
+char* baconian_decrypt(const char *input)
 {
 	int c;
 	int i;
-	int value[5];
+	int index = 0;
+	int value[BITS];
+	char *output = NULL;
+
+	output = calloc(countalpha(input) / BITS + countnonalpha(input) + 1, sizeof(char));
+	if (!output)
+		return NULL;
 
 	while ((c = *input)) {
 		if (isalpha(c)) {
@@ -62,9 +77,9 @@ void baconian_decrypt(const char *input)
 			if (!OKCHAR(c))
 				unexpected_char(*input);
 
-			value[4] = (c == 'A') ? 0 : 1;
+			value[BITS - 1] = (c == 'A') ? 0 : 1;
 			++input;
-			for (i = 3; i >= 0 && *input; i--, input++) {
+			for (i = BITS - 2; i >= 0 && *input; i--, input++) {
 				c = *input;
 
 				if (isalpha(c)) {
@@ -91,8 +106,12 @@ void baconian_decrypt(const char *input)
 			++input;
 		}
 
-		printf("%c", c);
+		output[index++] = c;
 	}
+
+	output[index] = '\0';
+
+	return output;
 }
 
 void usage(void)
@@ -105,6 +124,7 @@ int main(int argc, char **argv)
 {
 	int encrypt = 1;
 	char *buffer = NULL;
+	char *output = NULL;
 
 	if (argc == 2) {
 		if (strcmp("-d", argv[1]) == 0)
@@ -123,9 +143,17 @@ int main(int argc, char **argv)
 
 
 	if (encrypt)
-		baconian_encrypt(buffer);
+		output = baconian_encrypt(buffer);
 	else
-		baconian_decrypt(buffer);
+		output = baconian_decrypt(buffer);
+
+	if (output)
+		printf("%s\n", output);
+	else
+		fprintf(stderr, "Memory allocation error\n");
+
+	free(buffer);
+	free(output);
 
 	return 0;
 }
