@@ -1,5 +1,6 @@
 UTILSDIR=utils
-TOOLSDIR=tools
+SRCDIR=tools/src
+BINDIR=tools/bin
 
 CC=cc
 CFLAGS=-W -Wall -std=c89 -pedantic -I$(UTILSDIR)
@@ -14,31 +15,31 @@ utils.o: $(UTILSDIR)/utils.c
 
 
 affine: affine.o utils.o
-	$(CC) $(TOOLSDIR)/affine/affine.o $(UTILSDIR)/utils.o -o $(TOOLSDIR)/affine/affine $(CFLAGS) $(LDFLAGS)
+	$(CC) $(SRCDIR)/affine.o $(UTILSDIR)/utils.o -o $(BINDIR)/affine $(CFLAGS) $(LDFLAGS)
 
-affine.o: $(TOOLSDIR)/affine/affine.c
-	$(CC) -c $(TOOLSDIR)/affine/affine.c -o $(TOOLSDIR)/affine/affine.o $(CFLAGS) $(LDFLAGS)
+affine.o: tools/src/affine.c
+	$(CC) -c $(SRCDIR)/affine.c -o $(SRCDIR)/affine.o $(CFLAGS) $(LDFLAGS)
 
 atbash: atbash.o utils.o
-	$(CC) $(TOOLSDIR)/atbash/atbash.o $(UTILSDIR)/utils.o -o $(TOOLSDIR)/atbash/atbash $(CFLAGS) $(LDFLAGS)
+	$(CC) $(SRCDIR)/atbash.o $(UTILSDIR)/utils.o -o $(BINDIR)/atbash $(CFLAGS) $(LDFLAGS)
 
-atbash.o: $(TOOLSDIR)/atbash/atbash.c
-	$(CC) -c $(TOOLSDIR)/atbash/atbash.c -o $(TOOLSDIR)/atbash/atbash.o $(CFLAGS) $(LDFLAGS)
+atbash.o: $(SRCDIR)/atbash.c
+	$(CC) -c $(SRCDIR)/atbash.c -o $(SRCDIR)/atbash.o $(CFLAGS) $(LDFLAGS)
 
 baconian: baconian.o utils.o
-	$(CC) $(TOOLSDIR)/baconian/baconian.o $(UTILSDIR)/utils.o -o $(TOOLSDIR)/baconian/baconian $(CFLAGS) $(LDFLAGS)
+	$(CC) $(SRCDIR)/baconian.o $(UTILSDIR)/utils.o -o $(BINDIR)/baconian $(CFLAGS) $(LDFLAGS)
 
-baconian.o: $(TOOLSDIR)/baconian/baconian.c
-	$(CC) -c $(TOOLSDIR)/baconian/baconian.c -o $(TOOLSDIR)/baconian/baconian.o $(CFLAGS) $(LDFLAGS)
+baconian.o: $(SRCDIR)/baconian.c
+	$(CC) -c $(SRCDIR)/baconian.c -o $(SRCDIR)/baconian.o $(CFLAGS) $(LDFLAGS)
 
 
 clean:
 	rm -f $(UTILSDIR)/utils.o
-	rm -f $(TOOLSDIR)/affine/affine.o
-	rm -f $(TOOLSDIR)/atbash/atbash.o
-	rm -f $(TOOLSDIR)/baconian/baconian.o
+	rm -f $(SRCDIR)/affine.o
+	rm -f $(SRCDIR)/atbash.o
+	rm -f $(SRCDIR)/baconian.o
 
 mrproper: clean
-	rm -f $(TOOLSDIR)/affine/affine
-	rm -f $(TOOLSDIR)/atbash/atbash
-	rm -f $(TOOLSDIR)/baconian/baconian
+	rm -f $(BINDIR)/affine
+	rm -f $(BINDIR)/atbash
+	rm -f $(BINDIR)/baconian
