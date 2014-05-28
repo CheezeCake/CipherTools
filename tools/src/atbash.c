@@ -5,14 +5,14 @@
 
 #include "utils.h"
 
-char* atbash(char *input)
+char* atbash(const char *input)
 {
 	char c;
 	char *output = NULL;
 	int i = 0;
 
 	output = calloc(strlen(input) + 1, sizeof(char));
-	if (output == NULL)
+	if (!output)
 		return NULL;
 
 	while ((c = *input)) {

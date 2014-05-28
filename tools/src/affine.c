@@ -14,7 +14,7 @@ char* affine(const char *input, long int a, int b, int encrypt)
 	char *output = NULL;
 
 	output = calloc(strlen(input) + 1, sizeof(char));
-	if (output == NULL)
+	if (!output)
 		return NULL;
 
 	if(!encrypt) {
@@ -38,7 +38,7 @@ char* affine(const char *input, long int a, int b, int encrypt)
 		if (alpha != 0) {
 			x = c - alpha;
 
-				output[i++] = alpha + ((a * x + b) % 26);
+			output[i++] = alpha + ((a * x + b) % 26);
 		}
 
 		++input;
