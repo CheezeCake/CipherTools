@@ -90,7 +90,10 @@ void base64_decode(FILE *input)
 }
 
 void usage()
-{}
+{
+	fprintf(stderr, "usage: base64 [-d]\n");
+	exit(1);
+}
 
 int main(int argc, char **argv)
 {
