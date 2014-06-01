@@ -6,18 +6,6 @@
 
 #include "utils.h"
 
-char* readinput(void)
-{
-	char *buffer = NULL;
-
-	if ((buffer = calloc(MAX_LENGTH, sizeof(char))) == NULL)
-		return NULL;
-
-	fgets(buffer, MAX_LENGTH, stdin);
-
-	return buffer;
-}
-
 size_t countalpha(const char *str)
 {
 	size_t ret = 0;

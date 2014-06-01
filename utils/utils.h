@@ -3,9 +3,8 @@
 
 #include <stddef.h>
 
-#define MAX_LENGTH 4092
+#define BUFFER_SIZE 512
 
-char* readinput(void);
 size_t countalpha(const char*);
 size_t countnonalpha(const char*);
 

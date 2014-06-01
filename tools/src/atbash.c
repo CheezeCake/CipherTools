@@ -1,32 +1,39 @@
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "utils.h"
 
-char* atbash(const char *input)
+void atbash(FILE *input)
 {
+	uint8_t buffer[BUFFER_SIZE];
 	char c;
-	char *output = NULL;
 	int i = 0;
+	char output[BUFFER_SIZE + 1];
+	int size;
 
-	output = calloc(strlen(input) + 1, sizeof(char));
-	if (!output)
-		return NULL;
+	while ((size = fread(buffer, 1, BUFFER_SIZE, input)) > 0) {
+		for (i = 0; i < size; i++) {
+			c = buffer[i];
 
-	while ((c = *input)) {
-		if (isupper(c))
-			output[i++] = 'Z' - (c - 'A');
-		else if (islower(c))
-			output[i++] = 'z' - (c - 'a');
+			if (isupper(c))
+				c = 'Z' - (c - 'A');
+			else if (islower(c))
+				c = 'z' - (c - 'a');
 
-		++input;
+			output[i] = c;
+		}
+
+		output[size] = '\0';
+		printf("%s", output);
 	}
 
-	output[i] = '\0';
-
-	return output;
+	if (ferror(input)) {
+		fprintf(stderr, "error reading input");
+		exit(EXIT_FAILURE);
+	}
 }
 
 void usage(void)
@@ -37,29 +44,12 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
-	char *buffer = NULL;
-	char *output = NULL;
-
 	(void) argv;
 	if (argc != 1 && argc != 2)
 		usage();
 
 
-	if ((buffer = readinput()) == NULL) {
-		fprintf(stderr, "Error readind input\n");
-		return 2;
-	}
-
-
-	output = atbash(buffer);
-
-	if (output)
-		printf("%s\n", output);
-	else
-		fprintf(stderr, "Memory allocation error\n");
-
-	free(buffer);
-	free(output);
+	atbash(stdin);
 
 	return 0;
 }

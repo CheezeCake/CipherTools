@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,93 +26,96 @@ void unexpected_char(int c)
 	exit(1);
 }
 
-char* baconian_encrypt(const char *input)
+void baconian_encrypt(FILE *input)
 {
+	uint8_t buffer[BUFFER_SIZE];
 	int c;
 	int i;
-	int index = 0;
+	int j;
+	int output_index = 0;
 	const int mask = 0x10;
-	char *output = NULL;
+	char output[BUFFER_SIZE];
+	int size;
 
-	output = calloc(countalpha(input) * BITS + countnonalpha(input) + 1, sizeof(char));
-	if (!output)
-		return NULL;
+	while ((size = fread(buffer, 1, BUFFER_SIZE, input)) > 0) {
+		for (i = 0; i < size; i++) {
+			c = buffer[i];
 
-	while ((c = *input)) {
-		if (isalpha(c)) {
-			c = toupper(c) - 'A';
+			if (isalpha(c)) {
+				c = toupper(c) - 'A';
 
-			for (i = 0; i < BITS; i++) {
-				output[index++] = ((c & mask) == 0) ? 'A' : 'B';
-				c <<= 1;
+				for (j = 0; j < BITS; j++) {
+					output[output_index++] = ((c & mask) == 0) ? 'A' : 'B';
+					c <<= 1;
+				}
+			}
+			else {
+				output[output_index++] = c;
+			}
+
+			if (output_index > BUFFER_SIZE - BITS - 1) {
+				output[output_index] = '\0';
+				printf("%s", output);
+				output_index = 0;
 			}
 		}
-		else {
-			output[index++] = c;
-		}
 
-		++input;
+		output[output_index] = '\0';
+		printf("%s", output);
 	}
 
-	output[index] = '\0';
-
-	return output;
+	if (ferror(input)) {
+		fprintf(stderr, "error reading input");
+		exit(EXIT_FAILURE);
+	}
 }
 
-char* baconian_decrypt(const char *input)
+void baconian_decrypt(FILE *input)
 {
 	int c;
+	int _c;
 	int i;
-	int index = 0;
 	int value[BITS];
-	char *output = NULL;
 
-	output = calloc(countalpha(input) / BITS + countnonalpha(input) + 1, sizeof(char));
-	if (!output)
-		return NULL;
+	while ((c = fgetc(input)) != EOF) {
+		_c = c;
 
-	while ((c = *input)) {
 		if (isalpha(c)) {
 			c = toupper(c);
 
 			if (!OKCHAR(c))
-				unexpected_char(*input);
+				unexpected_char(_c);
 
 			value[BITS - 1] = (c == 'A') ? 0 : 1;
-			++input;
-			for (i = BITS - 2; i >= 0 && *input; i--, input++) {
-				c = *input;
+
+			for (i = BITS - 2; i >= 0; i--) {
+				c = fgetc(input);
+
+				if (c == EOF) {
+					fprintf(stderr, "unexpected end of input\n");
+					exit(1);
+				}
+
+				_c = c;
 
 				if (isalpha(c)) {
 					c = toupper(c);
 
 					if (!OKCHAR(c))
-						unexpected_char(*input);
+						unexpected_char(_c);
 
 					value[i] = (c == 'A') ? 0 : 1;
 				}
 				else {
-					unexpected_char(*input);
+					unexpected_char(_c);
 				}
-			}
-
-			if (i != -1) {
-				fprintf(stderr, "unexpected end of input\n");
-				exit(1);
 			}
 
 			c = 'A' + decrypt_value(value);
 		}
-		else {
-			++input;
-		}
 
-		output[index++] = c;
+		fputc(c, stdout);
 	}
-
-	output[index] = '\0';
-
-	return output;
 }
 
 void usage(void)
@@ -123,8 +127,6 @@ void usage(void)
 int main(int argc, char **argv)
 {
 	int encrypt = 1;
-	char *buffer = NULL;
-	char *output = NULL;
 
 	if (argc == 2) {
 		if (strcmp("-d", argv[1]) == 0)
@@ -136,24 +138,11 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	if ((buffer = readinput()) == NULL) {
-		fprintf(stderr, "Error reading input\n");
-		return 2;
-	}
-
 
 	if (encrypt)
-		output = baconian_encrypt(buffer);
+		baconian_encrypt(stdin);
 	else
-		output = baconian_decrypt(buffer);
-
-	if (output)
-		printf("%s\n", output);
-	else
-		fprintf(stderr, "Memory allocation error\n");
-
-	free(buffer);
-	free(output);
+		baconian_decrypt(stdin);
 
 	return 0;
 }

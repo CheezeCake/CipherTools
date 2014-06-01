@@ -1,52 +1,60 @@
 #include <ctype.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "utils.h"
 
-char* affine(const char *input, long int a, int b, int encrypt)
+void affine(FILE *input, long int a, int b, int encrypt)
 {
 	char alpha;
-	char c, x;
+	uint8_t buffer[BUFFER_SIZE];
+	char c;
 	int i;
-	char *output = NULL;
+	char output[BUFFER_SIZE + 1];
+	int size;
+	char x;
 
-	output = calloc(strlen(input) + 1, sizeof(char));
-	if (!output)
-		return NULL;
-
-	if(!encrypt) {
+	if (!encrypt) {
 		i = 1;
+
 		while ((a * i) % 26 != 1)
 			i += 2;
+
 		a = i;
 		b = a * (26 - b) % 26;
 	}
 
-	i = 0;
+	while ((size = fread(buffer, 1, BUFFER_SIZE, input)) > 0) {
+		for (i = 0; i < size; i++) {
+			c = buffer[i];
 
-	while ((c = *input)) {
-		if (isupper(c))
-			alpha = 'A';
-		else if (islower(c))
-			alpha = 'a';
-		else
-			alpha = 0;
+			if (isupper(c))
+				alpha = 'A';
+			else if (islower(c))
+				alpha = 'a';
+			else
+				alpha = 0;
 
-		if (alpha != 0) {
-			x = c - alpha;
+			if (alpha != 0) {
+				x = c - alpha;
 
-			output[i++] = alpha + ((a * x + b) % 26);
+				c = alpha + ((a * x + b) % 26);
+			}
+
+			output[i] = c;
 		}
 
-		++input;
+		output[size] = '\0';
+		printf("%s", output);
 	}
 
-	output[i] = '\0';
-
-	return output;
+	if (ferror(input)) {
+		fprintf(stderr, "error reading input");
+		exit(EXIT_FAILURE);
+	}
 }
 
 void usage(void)
@@ -62,8 +70,6 @@ int main(int argc, char **argv)
 	int encrypt = 1;
 	int arg = 1;
 
-	char *buffer = NULL;
-	char *output = NULL;
 	long int a = 0;
 	int b = 0;
 
@@ -90,21 +96,7 @@ int main(int argc, char **argv)
 		usage();
 
 
-	if ((buffer = readinput()) == NULL) {
-		fprintf(stderr, "Error reading input\n");
-		return 3;
-	}
-
-
-	output = affine(buffer, a, b, encrypt);
-
-	if (output)
-		printf("%s\n", output);
-	else
-		fprintf(stderr, "Memory allocation error\n");
-
-	free(buffer);
-	free(output);
+	affine(stdin, a, b, encrypt);
 
 	return 0;
 }

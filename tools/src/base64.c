@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,9 @@
 #define BASE 64
 #define BLOCK_SIZE 3
 #define ENCODED_SIZE 4
+
+#define BUF_SIZE (BUFFER_SIZE - (BUFFER_SIZE % BLOCK_SIZE))
+#define OUT_SIZE (BUF_SIZE + (BUF_SIZE / BLOCK_SIZE))
 
 static const char table[BASE] = {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
@@ -20,7 +24,7 @@ static const char table[BASE] = {
 	'4', '5', '6', '7', '8', '9', '+', '/'
 };
 
-void encode_block(const char *block, char *output, size_t pos)
+void encode_block(const uint8_t *block, char *output, size_t pos)
 {
 	int index;
 
@@ -37,52 +41,52 @@ void encode_block(const char *block, char *output, size_t pos)
 	output[pos + 3] = table[index];
 }
 
-char* base64_encode(const char *input)
+void base64_encode(FILE *input)
 {
-	char *output = NULL;
-	char block[BLOCK_SIZE] = { 0 };
-	int len;
-	int i = 0;
-	int j = 0;
-	int left_blocks;
+	int blocks_left;
+	uint8_t buffer[BUF_SIZE];
+	int i;
+	int j;
+	char output[OUT_SIZE + 1];
+	unsigned char block[BLOCK_SIZE] = {0};
+	int size;
 
-	len = strlen(input);
+	while ((size = fread(buffer, 1, BUF_SIZE, input))) {
+		i = 0;
+		j = 0;
 
-	output = calloc(((len / BLOCK_SIZE) + 1) * ENCODED_SIZE + 1,
-			sizeof(char));
-	if (!output)
-		return NULL;
+		while (i + BLOCK_SIZE <= size) {
+			encode_block(buffer + i, output, j);
 
+			i += BLOCK_SIZE;
+			j += ENCODED_SIZE;
+		}
 
-	while (i + BLOCK_SIZE <= len) {
-		encode_block(input + i, output, j);
+		if (i < size) {
+			for (blocks_left = 0; i < size; i++, blocks_left++)
+				block[blocks_left] = buffer[i];
 
-		i += BLOCK_SIZE;
-		j += ENCODED_SIZE;
+			encode_block(block, output, j);
+
+			for (i = j + blocks_left + 1; i < j + ENCODED_SIZE; i++)
+				output[i] = '=';
+
+			j += ENCODED_SIZE;
+		}
+
+		output[j] = '\0';
+		printf("%s", output);
 	}
 
-
-	if (i < len) {
-		for (left_blocks = 0; i < len; i++, left_blocks++)
-			block[left_blocks] = input[i];
-
-		encode_block(block, output, j);
-
-		for (i = j + left_blocks + 1; i < j + ENCODED_SIZE; i++)
-			output[i] = '=';
-
-		j += ENCODED_SIZE;
+	if (ferror(input)) {
+		fprintf(stderr, "error reading input");
+		exit(EXIT_FAILURE);
 	}
-
-	output[j] = '\0';
-
-	return output;
 }
 
-char* base64_decode(const char *input)
+void base64_decode(FILE *input)
 {
 	(void)input;
-	return NULL;
 }
 
 void usage()
@@ -91,8 +95,6 @@ void usage()
 int main(int argc, char **argv)
 {
 	int encode = 1;
-	char *buffer = NULL;
-	char *output = NULL;
 
 	if (argc == 2) {
 		if (strcmp("-d", argv[1]) == 0)
@@ -104,23 +106,11 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	if ((buffer = readinput()) == NULL) {
-		fprintf(stderr, "Error reading input\n");
-		return 2;
-	}
 
 	if (encode)
-		output = base64_encode(buffer);
+		base64_encode(stdin);
 	else
-		output = base64_decode(buffer);
-
-	if (output)
-		printf("%s\n", output);
-	else
-		fprintf(stderr, "Memory allocation error\n");
-
-	free(buffer);
-	free(output);
+		base64_decode(stdin);
 
 	return 0;
 }
