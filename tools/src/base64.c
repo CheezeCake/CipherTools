@@ -48,7 +48,7 @@ void base64_encode(FILE *input)
 	int i;
 	int j;
 	char output[OUT_SIZE + 1];
-	unsigned char block[BLOCK_SIZE] = {0};
+	uint8_t block[BLOCK_SIZE] = {0};
 	int size;
 
 	while ((size = fread(buffer, 1, BUF_SIZE, input))) {
