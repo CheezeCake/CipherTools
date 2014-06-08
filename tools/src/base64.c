@@ -41,6 +41,39 @@ void encode_block(const uint8_t *block, char *output, size_t pos)
 	output[pos + 3] = table[index];
 }
 
+uint8_t get_index_value(uint8_t encoded)
+{
+	int i;
+
+	if(encoded == '=')
+		return 0;
+
+	for (i = 0; i < BASE; i++) {
+		if (table[i] == encoded)
+			return i;
+	}
+
+	fprintf(stderr, "incorect input\n");
+	exit(EXIT_FAILURE);
+}
+
+void decode_block(uint8_t *block, uint8_t *output, size_t pos)
+{
+	int i;
+
+	for (i = 0; i < ENCODED_SIZE; i++)
+		block[i] = get_index_value(block[i]);
+
+	memset(output + pos, 0, BLOCK_SIZE);
+
+
+	output[pos] |= (block[0] << 2) | (block[1] >> 4);
+
+	output[pos + 1] |= ((block[1] & 0x0f) << 4) | (block[2] >> 2);
+
+	output[pos + 2] |= ((block[2] & 0x03) << 6) | (block[3] & 0x3f);
+}
+
 void base64_encode(FILE *input)
 {
 	int blocks_left;
@@ -86,7 +119,36 @@ void base64_encode(FILE *input)
 
 void base64_decode(FILE *input)
 {
-	(void)input;
+	uint8_t buffer[OUT_SIZE];
+	int i;
+	int j;
+	uint8_t output[BUF_SIZE + 1];
+	int size;
+
+	while ((size = fread(buffer, 1, OUT_SIZE, input))) {
+			i = 0;
+			j = 0;
+
+			while (i + ENCODED_SIZE <= size) {
+				decode_block(buffer + i, output, j);
+
+				i += ENCODED_SIZE;
+				j += BLOCK_SIZE;
+			}
+
+			if(i < size) {
+				fprintf(stderr, "incorrect input\n");
+				exit(EXIT_FAILURE);
+			}
+
+			output[j] = '\0';
+			printf("%s", output);
+	}
+
+	if (ferror(input)) {
+		fprintf(stderr, "error reading input\n");
+		exit(EXIT_FAILURE);
+	}
 }
 
 void usage()
