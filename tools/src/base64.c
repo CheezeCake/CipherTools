@@ -10,8 +10,8 @@
 #define BLOCK_SIZE 3
 #define ENCODED_SIZE 4
 
-#define BUF_SIZE (BUFFER_SIZE - (BUFFER_SIZE % BLOCK_SIZE) + 1)
-#define OUT_SIZE ((BUF_SIZE / BLOCK_SIZE) * ENCODED_SIZE + 1)
+#define BUF_SIZE (BUFFER_SIZE - (BUFFER_SIZE % BLOCK_SIZE))
+#define OUT_SIZE ((BUF_SIZE / BLOCK_SIZE) * ENCODED_SIZE)
 
 static const char table[BASE] = {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
