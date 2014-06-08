@@ -112,7 +112,7 @@ void base64_encode(FILE *input)
 	}
 
 	if (ferror(input)) {
-		fprintf(stderr, "error reading input");
+		fprintf(stderr, "error reading input\n");
 		exit(EXIT_FAILURE);
 	}
 }

@@ -52,7 +52,7 @@ void affine(FILE *input, long int a, int b, int encrypt)
 	}
 
 	if (ferror(input)) {
-		fprintf(stderr, "error reading input");
+		fprintf(stderr, "error reading input\n");
 		exit(EXIT_FAILURE);
 	}
 }
