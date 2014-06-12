@@ -57,21 +57,22 @@ uint8_t get_index_value(uint8_t encoded)
 	exit(EXIT_FAILURE);
 }
 
-void decode_block(uint8_t *block, uint8_t *output, size_t pos)
+void decode_block(const uint8_t *block, uint8_t *output, size_t pos)
 {
 	int i;
+	uint8_t index[ENCODED_SIZE] = {0};
 
 	for (i = 0; i < ENCODED_SIZE; i++)
-		block[i] = get_index_value(block[i]);
+		index[i] = get_index_value(block[i]);
 
 	memset(output + pos, 0, BLOCK_SIZE);
 
 
-	output[pos] |= (block[0] << 2) | (block[1] >> 4);
+	output[pos] |= (index[0] << 2) | (index[1] >> 4);
 
-	output[pos + 1] |= ((block[1] & 0x0f) << 4) | (block[2] >> 2);
+	output[pos + 1] |= ((index[1] & 0x0f) << 4) | (index[2] >> 2);
 
-	output[pos + 2] |= ((block[2] & 0x03) << 6) | (block[3] & 0x3f);
+	output[pos + 2] |= ((index[2] & 0x03) << 6) | (index[3] & 0x3f);
 }
 
 void base64_encode(FILE *input)
@@ -136,13 +137,20 @@ void base64_decode(FILE *input)
 				j += BLOCK_SIZE;
 			}
 
-			if(i < size) {
+			if (i < size) {
 				fprintf(stderr, "incorrect input\n");
 				exit(EXIT_FAILURE);
 			}
 
-			output[j] = '\0';
-			printf("%s", output);
+			if (buffer[i - 1] == '=') {
+				--j;
+
+				if (buffer[i - 2] == '=') {
+					--j;
+				}
+			}
+
+			fwrite(output, 1, j, stdout);
 	}
 
 	if (ferror(input)) {
